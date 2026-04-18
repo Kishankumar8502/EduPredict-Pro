@@ -2,9 +2,9 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 class ApiService {
-  // ✅ YOUR REAL IP
-  static const String apiUrl = 'http://10.239.70.55:5000/predict';
-
+  // ✅ YOUR REAL IP  https://edupredict-pro.onrender.com/predict
+  static const String apiUrl = 'https://edupredict-pro.onrender.com/predict';
+//http://10.239.70.55:5000/predict'
   static Future<Map<String, dynamic>> predictPerformance(Map<String, dynamic> payload) async {
     try {
       final response = await http.post(
