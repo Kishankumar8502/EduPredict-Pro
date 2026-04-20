@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 class ApiService {
-  static const bool isLocal = true;
+  static const bool isLocal = false;
 
   static String get apiUrl {
     if (isLocal) {

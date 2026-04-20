@@ -53,10 +53,28 @@ class _HistoryScreenState extends State<HistoryScreen> {
     }
 
     if (_history.isEmpty) {
-      return const Center(
-        child: Text(
-          'No Predictions Recorded Yet',
-          style: TextStyle(fontSize: 18, color: Colors.white54),
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Text(
+              'No history yet',
+              style: TextStyle(fontSize: 18, color: Colors.white54),
+            ),
+            const SizedBox(height: 20),
+            ElevatedButton.icon(
+              onPressed: () {
+                setState(() => _isLoading = true);
+                _loadHistory();
+              },
+              icon: const Icon(Icons.refresh, size: 18),
+              label: const Text("Refresh"),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.cyanAccent.withOpacity(0.2),
+                foregroundColor: Colors.cyanAccent,
+              ),
+            ),
+          ],
         ),
       );
     }
@@ -69,17 +87,29 @@ class _HistoryScreenState extends State<HistoryScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'Recent Predictions (${_history.length})',
+                'Recent (${_history.length})',
                 style: const TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
                   color: Colors.white70,
                 ),
               ),
-              TextButton.icon(
-                onPressed: _history.isEmpty ? null : _clearAll,
-                icon: const Icon(Icons.delete_sweep, color: Colors.redAccent),
-                label: const Text('Clear All', style: TextStyle(color: Colors.redAccent)),
+              Row(
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.refresh, color: Colors.cyanAccent),
+                    tooltip: 'Refresh',
+                    onPressed: () {
+                      setState(() => _isLoading = true);
+                      _loadHistory();
+                    },
+                  ),
+                  TextButton.icon(
+                    onPressed: _history.isEmpty ? null : _clearAll,
+                    icon: const Icon(Icons.delete_sweep, color: Colors.redAccent, size: 20),
+                    label: const Text('Clear', style: TextStyle(color: Colors.redAccent)),
+                  ),
+                ],
               ),
             ],
           ),

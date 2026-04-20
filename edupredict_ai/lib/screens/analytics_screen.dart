@@ -12,6 +12,7 @@ class AnalyticsScreen extends StatefulWidget {
 class _AnalyticsScreenState extends State<AnalyticsScreen> with SingleTickerProviderStateMixin {
   bool _isLoading = true;
   Map<String, dynamic>? _latestData;
+  bool _showIdeal = false;
 
   late AnimationController _animController;
   late Animation<double> _fadeAnimation;
@@ -87,12 +88,31 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> with SingleTickerProv
     }
 
     if (_latestData == null) {
-      return const Scaffold(
+      return Scaffold(
         backgroundColor: Colors.transparent,
         body: Center(
-          child: Text(
-            "Execute a prediction first to see your analytics.",
-            style: TextStyle(color: Colors.white70, fontSize: 16),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Text(
+                "Run a prediction first to see your analytics.",
+                style: TextStyle(color: Colors.white70, fontSize: 16),
+              ),
+              const SizedBox(height: 20),
+              ElevatedButton.icon(
+                onPressed: () {
+                  setState(() => _isLoading = true);
+                  _loadHistory();
+                },
+                icon: const Icon(Icons.refresh, size: 18),
+                label: const Text("Refresh Analysis"),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.cyanAccent.withOpacity(0.2),
+                  foregroundColor: Colors.cyanAccent,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+              ),
+            ],
           ),
         ),
       );
@@ -128,7 +148,45 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> with SingleTickerProv
                 "Visualize your strengths and weaknesses based on your latest inputs.",
                 style: TextStyle(color: Colors.white54, fontSize: 14),
               ),
-              const SizedBox(height: 32),
+              const SizedBox(height: 20),
+              
+              // Action Buttons Row
+              Row(
+                children: [
+                  ElevatedButton.icon(
+                    onPressed: () {
+                      setState(() => _isLoading = true);
+                      _loadHistory();
+                    },
+                    icon: const Icon(Icons.refresh, size: 18),
+                    label: const Text("Refresh Analysis"),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.cyanAccent.withOpacity(0.2),
+                      foregroundColor: Colors.cyanAccent,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                  ),
+                  const Spacer(),
+                  Row(
+                    children: [
+                      const Text("Compare Ideal", style: TextStyle(color: Colors.white70, fontSize: 13)),
+                      Switch(
+                        value: _showIdeal,
+                        activeColor: Colors.cyanAccent,
+                        activeTrackColor: Colors.cyanAccent.withOpacity(0.4),
+                        inactiveThumbColor: Colors.white54,
+                        inactiveTrackColor: Colors.white.withOpacity(0.1),
+                        onChanged: (val) {
+                          setState(() {
+                            _showIdeal = val;
+                          });
+                        },
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
               
               // Animated Premium Card for Radar Chart
               FadeTransition(
@@ -191,20 +249,21 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> with SingleTickerProv
                                 letterSpacing: 0.5,
                               ),
                               dataSets: [
-                                RadarDataSet(
-                                  fillColor: Colors.deepPurpleAccent.withOpacity(0.15),
-                                  borderColor: Colors.deepPurpleAccent.withOpacity(0.6),
-                                  entryRadius: 0,
-                                  borderWidth: 2,
-                                  dataEntries: const [
-                                    RadarEntry(value: 80.0), // Ideal Study: 8 hours
-                                    RadarEntry(value: 90.0), // Ideal Attendance: 90%
-                                    RadarEntry(value: 85.0), // Ideal Math
-                                    RadarEntry(value: 85.0), // Ideal Science
-                                    RadarEntry(value: 85.0), // Ideal English
-                                    RadarEntry(value: 95.0), // Ideal Focus
-                                  ],
-                                ),
+                                if (_showIdeal)
+                                  RadarDataSet(
+                                    fillColor: Colors.deepPurpleAccent.withOpacity(0.15),
+                                    borderColor: Colors.deepPurpleAccent.withOpacity(0.6),
+                                    entryRadius: 0,
+                                    borderWidth: 2,
+                                    dataEntries: const [
+                                      RadarEntry(value: 80.0), // Ideal Study: 8 hours
+                                      RadarEntry(value: 90.0), // Ideal Attendance: 90%
+                                      RadarEntry(value: 85.0), // Ideal Math
+                                      RadarEntry(value: 85.0), // Ideal Science
+                                      RadarEntry(value: 85.0), // Ideal English
+                                      RadarEntry(value: 95.0), // Ideal Focus
+                                    ],
+                                  ),
                                 RadarDataSet(
                                   fillColor: Colors.cyanAccent.withOpacity(0.25),
                                   borderColor: Colors.cyanAccent,
