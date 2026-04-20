@@ -26,19 +26,21 @@ class ApiService {
         return {
           'success': true,
           'score': (data['predicted_overall_score'] as num?)?.toDouble() ?? _getFallbackScore(payload),
+          'level': data['level'],
+          'improvement': data['improvement'],
         };
       } else {
         return {
-          'success': true,
+          'success': false,
           'score': _getFallbackScore(payload),
-          'message': 'Running in demo mode (local prediction)',
+          'error': 'Server error. Please try again.',
         };
       }
     } catch (e) {
       return {
-        'success': true,
+        'success': false,
         'score': _getFallbackScore(payload),
-        'message': 'Running in demo mode (local prediction)',
+        'error': 'Server error. Please try again.',
       };
     }
   }

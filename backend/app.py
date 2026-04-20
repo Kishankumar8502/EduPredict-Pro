@@ -96,10 +96,23 @@ def predict():
         # 6. Output 
         overall_score = float(np.clip(prediction, 0, 100))
         
+        if overall_score >= 85:
+            level = "Excellent"
+        elif overall_score >= 70:
+            level = "Good"
+        elif overall_score >= 50:
+            level = "Average"
+        else:
+            level = "Needs Improvement"
+            
+        improvement = f"+{round(100.0 - overall_score, 2)} marks possible"
+        
         return jsonify({
             "success": True,
             "predicted_overall_score": round(overall_score, 2),
-            "prediction": round(overall_score, 2)
+            "prediction": round(overall_score, 2),
+            "level": level,
+            "improvement": improvement
         })
         
     except Exception as e:

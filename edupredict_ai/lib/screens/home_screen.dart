@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
 import '../services/history_service.dart';
+import '../services/auth_service.dart';
 import '../widgets/input_card.dart';
 import '../widgets/custom_slider.dart';
 
@@ -43,6 +44,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   @override
   void initState() {
     super.initState();
+    _loadProfileData();
     _animController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1200),
@@ -51,6 +53,20 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
         CurvedAnimation(parent: _animController, curve: Curves.easeIn));
     _scaleAnimation = Tween<double>(begin: 0.95, end: 1.0).animate(
         CurvedAnimation(parent: _animController, curve: Curves.easeOutBack));
+  }
+
+  Future<void> _loadProfileData() async {
+    final details = await AuthService.getUserDetails();
+    if (!mounted) return;
+    setState(() {
+      if (details['age'] != null && details['age'] != 0) {
+        _ageController.text = details['age'].toString();
+      }
+      if (details['gender'] != null && details['gender'].toString().isNotEmpty) {
+        final g = details['gender'].toString().toLowerCase();
+        if (['male', 'female', 'other'].contains(g)) _gender = g;
+      }
+    });
   }
 
   @override
@@ -123,7 +139,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
       return {
         'level': 'Excellent',
         'potential': 'Mastery - 100',
-        'improvement': 'Maximized',
+        'improvement': '+${(100 - score).toStringAsFixed(1)} marks possible',
         'message': "Incredible work! You are performing at the highest tier. Keep refining your knowledge to hit absolute mastery.",
         'color': Colors.cyanAccent,
       };
@@ -131,15 +147,23 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
       return {
         'level': 'Good',
         'potential': 'Excellent - 85+',
-        'improvement': '+${(85 - score).toStringAsFixed(1)} Marks',
+        'improvement': '+${(100 - score).toStringAsFixed(1)} marks possible',
         'message': "You're on the right track! With better consistency and focus, you can unlock your full potential and achieve top grades.",
         'color': Colors.greenAccent,
+      };
+    } else if (score >= 50) {
+      return {
+        'level': 'Average',
+        'potential': 'Good - 70+',
+        'improvement': '+${(100 - score).toStringAsFixed(1)} marks possible',
+        'message': "There's room for improvement. Focus on your weaker subjects and try to build more consistent study habits.",
+        'color': Colors.yellowAccent,
       };
     } else {
       return {
         'level': 'Needs Improvement',
-        'potential': 'Good - 70+',
-        'improvement': '+${(85 - score).toStringAsFixed(1)} Marks',
+        'potential': 'Average - 50+',
+        'improvement': '+${(100 - score).toStringAsFixed(1)} marks possible',
         'message': "Don't lose hope. A shift in strategy and intensive review can dramatically pull your scores up into the Excellent bracket.",
         'color': Colors.orangeAccent,
       };

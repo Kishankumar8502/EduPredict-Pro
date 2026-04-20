@@ -57,27 +57,24 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> with SingleTickerProv
   // Normalization Methods: 0 to 100 scale
   double _normalizeStudy(dynamic value) {
     double v = (value ?? 4.0) is num ? (value ?? 4.0).toDouble() : 4.0;
-    return (v / 10) * 100;
-  }
-
-  double _normalizeSleep(dynamic value) {
-    double v = (value ?? 7.0) is num ? (value ?? 7.0).toDouble() : 7.0;
-    return (v / 10) * 100;
+    return (v / 10).clamp(0.0, 1.0) * 100;
   }
 
   double _normalizeAttendance(dynamic value) {
     double v = (value ?? 85.0) is num ? (value ?? 85.0).toDouble() : 85.0;
-    return v;
+    return v.clamp(0.0, 100.0);
   }
 
-  double _normalizeStress(dynamic value) {
-    double v = (value ?? 40.0) is num ? (value ?? 40.0).toDouble() : 40.0;
-    return 100 - v;
+  double _normalizeScore(dynamic value) {
+    double v = (value ?? 50.0) is num ? (value ?? 50.0).toDouble() : 50.0;
+    return v.clamp(0.0, 100.0);
   }
 
-  double _normalizeEntertainment(dynamic value) {
-    double v = (value ?? 30.0) is num ? (value ?? 30.0).toDouble() : 30.0;
-    return 100 - v;
+  double _normalizeFocus(dynamic method) {
+    String m = method?.toString().toLowerCase() ?? 'mixed';
+    if (['notes', 'textbook', 'coaching'].contains(m)) return 95.0;
+    if (m == 'mixed' || m == 'group study') return 65.0;
+    return 35.0;
   }
 
   @override
@@ -102,10 +99,11 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> with SingleTickerProv
     }
 
     final studyVal = _normalizeStudy(_latestData!['study_hours']);
-    final sleepVal = _normalizeSleep(_latestData!['sleep_hours']);
     final attendanceVal = _normalizeAttendance(_latestData!['attendance']);
-    final stressVal = _normalizeStress(_latestData!['stress']);
-    final entertainmentVal = _normalizeEntertainment(_latestData!['entertainment_time']);
+    final mathVal = _normalizeScore(_latestData!['math_score']);
+    final scienceVal = _normalizeScore(_latestData!['science_score']);
+    final englishVal = _normalizeScore(_latestData!['english_score']);
+    final focusVal = _normalizeFocus(_latestData!['study_method']);
 
     return Scaffold(
       backgroundColor: Colors.transparent,
@@ -173,13 +171,15 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> with SingleTickerProv
                                   case 0:
                                     return RadarChartTitle(text: 'Study\nHours', angle: angle);
                                   case 1:
-                                    return RadarChartTitle(text: 'Sleep\nHours', angle: angle);
-                                  case 2:
                                     return RadarChartTitle(text: 'Attendance', angle: angle);
+                                  case 2:
+                                    return RadarChartTitle(text: 'Math', angle: angle);
                                   case 3:
-                                    return RadarChartTitle(text: 'Stress\nControl', angle: angle);
+                                    return RadarChartTitle(text: 'Science', angle: angle);
                                   case 4:
-                                    return RadarChartTitle(text: 'Focus\n(Less Ent.)', angle: angle);
+                                    return RadarChartTitle(text: 'English', angle: angle);
+                                  case 5:
+                                    return RadarChartTitle(text: 'Focus', angle: angle);
                                   default:
                                     return const RadarChartTitle(text: '');
                                 }
@@ -192,15 +192,30 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> with SingleTickerProv
                               ),
                               dataSets: [
                                 RadarDataSet(
+                                  fillColor: Colors.deepPurpleAccent.withOpacity(0.15),
+                                  borderColor: Colors.deepPurpleAccent.withOpacity(0.6),
+                                  entryRadius: 0,
+                                  borderWidth: 2,
+                                  dataEntries: const [
+                                    RadarEntry(value: 80.0), // Ideal Study: 8 hours
+                                    RadarEntry(value: 90.0), // Ideal Attendance: 90%
+                                    RadarEntry(value: 85.0), // Ideal Math
+                                    RadarEntry(value: 85.0), // Ideal Science
+                                    RadarEntry(value: 85.0), // Ideal English
+                                    RadarEntry(value: 95.0), // Ideal Focus
+                                  ],
+                                ),
+                                RadarDataSet(
                                   fillColor: Colors.cyanAccent.withOpacity(0.25),
                                   borderColor: Colors.cyanAccent,
                                   entryRadius: 4,
                                   dataEntries: [
                                     RadarEntry(value: studyVal),
-                                    RadarEntry(value: sleepVal),
                                     RadarEntry(value: attendanceVal),
-                                    RadarEntry(value: stressVal),
-                                    RadarEntry(value: entertainmentVal),
+                                    RadarEntry(value: mathVal),
+                                    RadarEntry(value: scienceVal),
+                                    RadarEntry(value: englishVal),
+                                    RadarEntry(value: focusVal),
                                   ],
                                   borderWidth: 2.5,
                                 ),
@@ -269,10 +284,28 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> with SingleTickerProv
                       ),
                       const SizedBox(height: 12),
                       const Text(
-                        "• The closer the shape is to the outer edge, the better your performance in that category.\n\n"
-                        "• Stress Control and Focus are inverted: having lower stress and less entertainment time pushes the chart outwards, indicating better habits.",
+                        "• The outer cyan polygon represents your metrics. The purple inner polygon is the 'Ideal Student' baseline.\n"
+                        "• Expand your perimeter beyond the purple line to achieve top tier performance.",
                         style: TextStyle(color: Colors.white70, height: 1.5, fontSize: 13),
                       ),
+                      const SizedBox(height: 24),
+                      const Divider(color: Colors.white24),
+                      const SizedBox(height: 12),
+                      const Text(
+                        "Smart Insights (Strengths & Weaknesses)",
+                        style: TextStyle(color: Colors.cyanAccent, fontWeight: FontWeight.bold, fontSize: 15),
+                      ),
+                      const SizedBox(height: 12),
+                      if (studyVal < 60)
+                        const Text("⚠️ Weakness: Increase daily study time. Aim for closer to 8 hours.", style: TextStyle(color: Colors.orangeAccent)),
+                      if (attendanceVal < 80)
+                        const Padding(padding: EdgeInsets.only(top: 8), child: Text("⚠️ Weakness: Improve class attendance to avoid knowledge gaps.", style: TextStyle(color: Colors.orangeAccent))),
+                      if (focusVal < 60)
+                        const Padding(padding: EdgeInsets.only(top: 8), child: Text("⚠️ Weakness: Consider switching to a structured study method like 'notes' or 'textbook'.", style: TextStyle(color: Colors.orangeAccent))),
+                      if (studyVal >= 80 && attendanceVal >= 85)
+                        const Padding(padding: EdgeInsets.only(top: 8), child: Text("⭐ Strength: Your discipline in studying and attendance is fantastic. Keep it up!", style: TextStyle(color: Colors.greenAccent))),
+                      if (mathVal >= 80 || scienceVal >= 80 || englishVal >= 80)
+                        const Padding(padding: EdgeInsets.only(top: 8), child: Text("⭐ Strength: You have a solid grasp on core subjects. You are outperforming the baseline.", style: TextStyle(color: Colors.greenAccent))),
                     ],
                   ),
                 ),
