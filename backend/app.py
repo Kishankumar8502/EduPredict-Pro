@@ -6,49 +6,48 @@ import os
 
 app = Flask(__name__)
 
-# 1. Model Loading
-try:
-    model_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "best_student_performance_model.joblib")
-    model = joblib.load(model_path)
-    print("Machine Learning Model loaded successfully!")
-except Exception as e:
-    model = None
-    print(f"Warning: Model failed to load. Ensure 'best_student_performance_model.joblib' is in this folder. Error: {e}")
+# ✅ MODEL LOADING (FIXED + DEBUG)
+model = None
+model_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "best_model.joblib")
 
-# Flask Setup (Home Route)
+print("🔍 Trying to load model from:", model_path)
+
+try:
+    if os.path.exists(model_path):
+        model = joblib.load(model_path)
+        print("✅ Model loaded successfully!")
+        print("📦 Model type:", type(model))
+    else:
+        print("❌ Model not found at path:", model_path)
+except Exception as e:
+    print("❌ Model loading failed:", e)
+    model = None
+
+# HOME ROUTE
 @app.route("/", methods=["GET"])
 def home():
-    return jsonify({"message": "API is running. Send a POST request to /predict"}), 200
+    return jsonify({"message": "API is running. Send POST to /predict"}), 200
 
-# 5. Prediction API
+# ✅ PREDICTION ROUTE (FIXED)
 @app.route("/predict", methods=["POST"])
 def predict():
     try:
         data = request.get_json()
-        print("Incoming data:", data)
+        print("📥 Incoming:", data)
+
         if not data:
-            data = {}
-        
-        # 3. Validation
-        required_fields = [
-            "study_hours", "attendance", "cgpa", 
-            "travel_time", "internet_access", "parent_education",
-            "age", "gender", "school_type", "extra_activities", 
-            "study_method", "math_score", "science_score", "english_score"
-        ]
-        
-        missing_fields = [field for field in required_fields if field not in data]
-        
-        # Disabled returning 400 error to ensure fallback handling works
-        # if len(missing_fields) > 0:
-        #     return jsonify({"error": "Missing required input fields"}), 400
-            
-        # 1. Input Mapping Exactly matches required model features
-        study_hours = float(data.get("study_hours", 5.0))
-        attendance = float(data.get("attendance", 85.0))
-        cgpa = float(data.get("cgpa", 0.0))
-        
-        # Convert cgpa into final_grade
+            return jsonify({"success": False, "error": "No input data"}), 400
+
+        # CRITICAL FIX: Fail early if no model loaded
+        if model is None:
+            return jsonify({
+                "success": False,
+                "error": "Model not loaded properly"
+            }), 500
+
+        # ✅ CGPA → GRADE
+        cgpa = float(data.get("cgpa", 0))
+
         if cgpa >= 9:
             grade = 'a'
         elif cgpa >= 8:
@@ -62,62 +61,63 @@ def predict():
         else:
             grade = 'f'
 
-        model_input_data = pd.DataFrame([{
+        # ✅ DATAFRAME (STRICT MATCH WITH DATASET)
+        df = pd.DataFrame([{
             'age': int(data.get("age", 15)),
-            'gender': data.get("gender", "other").lower(),
-            'school_type': data.get("school_type", "public").lower(),
-            'parent_education': data.get("parent_education", "high school").lower(),
-            'study_hours': study_hours,
-            'attendance_percentage': attendance,
-            'internet_access': data.get("internet_access", "yes").lower(),
-            'travel_time': data.get("travel_time", "15-30 min").lower(),
-            'extra_activities': data.get("extra_activities", "no").lower(),
-            'study_method': data.get("study_method", "mixed").lower(),
-            'math_score': float(data.get("math_score", 50.0)),
-            'science_score': float(data.get("science_score", 50.0)),
-            'english_score': float(data.get("english_score", 50.0)),
+            'gender': str(data.get("gender", "other")).lower(),
+            'school_type': str(data.get("school_type", "public")).lower(),
+            'parent_education': str(data.get("parent_education", "high school")).lower(),
+            'study_hours': float(data.get("study_hours", 5)),
+            'attendance_percentage': float(data.get("attendance", 85)),
+            'internet_access': str(data.get("internet_access", "yes")).lower(),
+            'travel_time': str(data.get("travel_time", "15-30 min")).lower(),
+            'extra_activities': str(data.get("extra_activities", "no")).lower(),
+            'study_method': str(data.get("study_method", "mixed")).lower(),
+            'math_score': float(data.get("math_score", 50)),
+            'science_score': float(data.get("science_score", 50)),
+            'english_score': float(data.get("english_score", 50)),
             'final_grade': grade
         }])
-        print("Processed DataFrame:")
-        print(model_input_data)
-        
-        # 5. Prediction
-        if model is not None:
-            prediction = float(model.predict(model_input_data)[0])
+
+        print("📊 Processed DF:")
+        print(df)
+
+        # ✅ PREDICTION SAFE CALL
+        prediction = model.predict(df)
+
+        # ⚠️ HANDLE PIPELINE RETURN
+        if isinstance(prediction, (list, np.ndarray)):
+            prediction = float(prediction[0])
         else:
-            # Better fallback formula matching train_model.py
-            sleep_hours = float(data.get("sleep_hours", 7))
-            entertainment_hours = float(data.get("entertainment_hours", 2))
-            subjects = int(data.get("subjects", 3))
-            prediction = (study_hours * 7) + (sleep_hours * 3) - (entertainment_hours * 2.5) + (subjects * 1.5)
-            
-        print("Prediction output:", prediction)
-        
-        # 6. Output 
-        overall_score = float(np.clip(prediction, 0, 100))
-        
-        if overall_score >= 85:
+            prediction = float(prediction)
+
+        print("🎯 Raw Prediction:", prediction)
+
+        score = float(np.clip(prediction, 0, 100))
+
+        # ✅ LEVEL LOGIC
+        if score >= 85:
             level = "Excellent"
-        elif overall_score >= 70:
+        elif score >= 70:
             level = "Good"
-        elif overall_score >= 50:
+        elif score >= 50:
             level = "Average"
         else:
             level = "Needs Improvement"
-            
-        improvement = f"+{round(100.0 - overall_score, 2)} marks possible"
-        
+
+        improvement = f"+{round(100 - score, 2)} marks possible"
+
         return jsonify({
             "success": True,
-            "predicted_overall_score": round(overall_score, 2),
-            "prediction": round(overall_score, 2),
+            "prediction": round(score, 2),
+            "predicted_overall_score": round(score, 2),
             "level": level,
             "improvement": improvement
         })
-        
+
     except Exception as e:
-        # Generic graceful exception block 
-        return jsonify({"success": False, "error": str(e)}), 400
+        print("❌ ERROR:", e)
+        return jsonify({"success": False, "error": str(e)}), 500
 
 if __name__ == "__main__":
     app.run(debug=True, host="0.0.0.0", port=5000)
