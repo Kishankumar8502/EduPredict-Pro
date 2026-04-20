@@ -6,7 +6,7 @@ from sklearn.compose import ColumnTransformer
 from sklearn.pipeline import Pipeline
 from sklearn.linear_model import LinearRegression
 from sklearn.tree import DecisionTreeRegressor
-from sklearn.metrics import r2_score
+from sklearn.metrics import r2_score, mean_squared_error
 import joblib
 
 def build_student_performance_model():
@@ -31,12 +31,9 @@ def build_student_performance_model():
     # Handle missing values by dropping them (or you could fill them)
     df = df.dropna()
 
-    # Convert "final_grade" (e.g. 'a', 'b', 'c', 'd', 'e', 'f') into numeric values
-    # Higher grade 'a' gets a higher numeric value
-    grade_mapping = {'a': 5, 'b': 4, 'c': 3, 'd': 2, 'e': 1, 'f': 0}
+    # Leave final_grade as string to be processed categorically by the pipeline
     if 'final_grade' in df.columns:
-        df['final_grade'] = df['final_grade'].str.lower().map(grade_mapping)
-        # Drop any rows where grade wasn't in our mapping
+        df['final_grade'] = df['final_grade'].str.lower()
         df = df.dropna(subset=['final_grade'])
 
     # Separate features (X) and target (y)
@@ -92,10 +89,14 @@ def build_student_performance_model():
     # Calculate R2 Scores
     lr_r2 = r2_score(y_test, lr_preds)
     dt_r2 = r2_score(y_test, dt_preds)
+    
+    # Calculate RMSE
+    lr_rmse = np.sqrt(mean_squared_error(y_test, lr_preds))
+    dt_rmse = np.sqrt(mean_squared_error(y_test, dt_preds))
 
     print("\n--- Evaluation Results ---")
-    print(f"Linear Regression R² Score: {lr_r2:.4f}")
-    print(f"Decision Tree R² Score: {dt_r2:.4f}")
+    print(f"Linear Regression R² Score: {lr_r2:.4f} | RMSE: {lr_rmse:.4f}")
+    print(f"Decision Tree R² Score: {dt_r2:.4f} | RMSE: {dt_rmse:.4f}")
 
     # Show a few predictions vs actual
     print("\nSample Predictions (Linear Reg vs Actual):")

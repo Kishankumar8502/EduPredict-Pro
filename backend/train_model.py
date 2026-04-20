@@ -17,7 +17,7 @@ def train_dummy_model():
     
     # Target: Performance score (0-100)
     # Give positive weights to study and sleep, negative weight to extreme entertainment
-    score = (study_hours * 5.5) + (sleep_hours * 4.0) - (entertainment_hours * 2.5) + (subjects * 1.5) + np.random.normal(0, 4, n_samples)
+    score = (study_hours * 7) + (sleep_hours * 3) - (entertainment_hours * 2.5) + (subjects * 1.5) + np.random.normal(0, 3, n_samples)
     score = np.clip(score, 0, 100)
     
     # Create DataFrame
@@ -31,7 +31,7 @@ def train_dummy_model():
     
     print("Training RandomForest Regression model...")
     # Train the Machine Learning model
-    model = RandomForestRegressor(n_estimators=100, max_depth=10, random_state=42)
+    model = RandomForestRegressor(n_estimators=200, max_depth=12, random_state=42)
     model.fit(X, y)
     
     print("Evaluating model...")

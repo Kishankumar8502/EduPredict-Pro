@@ -92,6 +92,15 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
       _isLoading = false;
       if (result['success'] == true) {
         _predictedScore = result['score'];
+        if (result['message'] != null) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(result['message']),
+              backgroundColor: Colors.orange,
+              duration: const Duration(seconds: 3),
+            ),
+          );
+        }
       } else {
         _errorMessage = result['error'] ?? 'Unknown Error';
       }
