@@ -28,6 +28,7 @@ class ApiService {
           'score': (data['predicted_overall_score'] as num?)?.toDouble() ?? _getFallbackScore(payload),
           'level': data['level'],
           'improvement': data['improvement'],
+          'insights': data['insights'] != null ? List<String>.from(data['insights']) : [],
         };
       } else {
         return {

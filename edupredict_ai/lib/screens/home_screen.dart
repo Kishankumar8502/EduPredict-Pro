@@ -34,6 +34,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
 
   bool _isLoading = false;
   double? _predictedScore;
+  Map<String, dynamic> _apiData = {};
   String _errorMessage = '';
 
   // Animation controller for the AI card
@@ -108,6 +109,11 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
       _isLoading = false;
       if (result['success'] == true) {
         _predictedScore = result['score'];
+        _apiData = {
+          'level': result['level'],
+          'improvement': result['improvement'],
+          'insights': result['insights'] ?? [],
+        };
         if (result['message'] != null) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -172,6 +178,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
 
   Widget _buildInsightRow(IconData icon, String label, String value, {Color valueColor = Colors.white70}) {
     return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Icon(icon, color: Colors.white54, size: 20),
         const SizedBox(width: 12),
@@ -179,13 +186,16 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
           label,
           style: const TextStyle(color: Colors.white54, fontSize: 15),
         ),
-        const Spacer(),
-        Text(
-          value,
-          style: TextStyle(
-            color: valueColor,
-            fontSize: 15,
-            fontWeight: FontWeight.bold,
+        const SizedBox(width: 12),
+        Expanded(
+          child: Text(
+            value,
+            textAlign: TextAlign.right,
+            style: TextStyle(
+              color: valueColor,
+              fontSize: 15,
+              fontWeight: FontWeight.bold,
+            ),
           ),
         ),
       ],
@@ -312,38 +322,71 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                       const SizedBox(height: 24),
                       Divider(color: Colors.white.withOpacity(0.1)),
                       const SizedBox(height: 16),
-                      _buildInsightRow(Icons.bar_chart, "Current Level:", insight['level']),
+                      _buildInsightRow(Icons.bar_chart, "Current Level:", _apiData['level'] ?? insight['level']),
                       const SizedBox(height: 12),
                       _buildInsightRow(Icons.rocket_launch, "Potential Level:", insight['potential']),
                       const SizedBox(height: 12),
-                      _buildInsightRow(Icons.trending_up, "Improvement Potential:", insight['improvement'], valueColor: Colors.white),
+                      _buildInsightRow(Icons.trending_up, "Improvement Potential:", _apiData['improvement'] ?? insight['improvement'], valueColor: Colors.white),
                       const SizedBox(height: 24),
-                      Container(
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: Colors.black.withOpacity(0.3),
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: Colors.white.withOpacity(0.1)),
-                        ),
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Icon(Icons.local_fire_department, color: Colors.orangeAccent),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Text(
-                                insight['message'],
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 14,
-                                  height: 1.4,
-                                  fontStyle: FontStyle.italic,
+                      
+                      // Dynamic Web Insights
+                      if (_apiData['insights'] != null && (_apiData['insights'] as List).isNotEmpty)
+                        ...(_apiData['insights'] as List).map((msg) => Padding(
+                          padding: const EdgeInsets.only(bottom: 12.0),
+                          child: Container(
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: Colors.black.withOpacity(0.3),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: Colors.white.withOpacity(0.1)),
+                            ),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Icon(Icons.local_fire_department, color: Colors.orangeAccent),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Text(
+                                    msg.toString(),
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 14,
+                                      height: 1.4,
+                                      fontStyle: FontStyle.italic,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        )).toList()
+                      else
+                        Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: Colors.black.withOpacity(0.3),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: Colors.white.withOpacity(0.1)),
+                          ),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Icon(Icons.local_fire_department, color: Colors.orangeAccent),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Text(
+                                  insight['message'],
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 14,
+                                    height: 1.4,
+                                    fontStyle: FontStyle.italic,
+                                  ),
                                 ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
-                      ),
                     ],
                   ),
                 ),

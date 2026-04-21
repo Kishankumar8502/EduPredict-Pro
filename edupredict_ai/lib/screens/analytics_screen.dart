@@ -354,13 +354,14 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> with SingleTickerProv
                         "Smart Insights (Strengths & Weaknesses)",
                         style: TextStyle(color: Colors.cyanAccent, fontWeight: FontWeight.bold, fontSize: 15),
                       ),
-                      const SizedBox(height: 12),
-                      if (studyVal < 60)
-                        const Text("⚠️ Weakness: Increase daily study time. Aim for closer to 8 hours.", style: TextStyle(color: Colors.orangeAccent)),
-                      if (attendanceVal < 80)
+                      if (studyVal < 50)
+                        const Padding(padding: EdgeInsets.only(top: 8), child: Text("⚠️ Weakness: Increase study time gradually based on your current level.", style: TextStyle(color: Colors.orangeAccent))),
+                      if (attendanceVal < 70)
                         const Padding(padding: EdgeInsets.only(top: 8), child: Text("⚠️ Weakness: Improve class attendance to avoid knowledge gaps.", style: TextStyle(color: Colors.orangeAccent))),
                       if (focusVal < 60)
                         const Padding(padding: EdgeInsets.only(top: 8), child: Text("⚠️ Weakness: Consider switching to a structured study method like 'notes' or 'textbook'.", style: TextStyle(color: Colors.orangeAccent))),
+                      if (mathVal < 60 || scienceVal < 60 || englishVal < 60)
+                        const Padding(padding: EdgeInsets.only(top: 8), child: Text("⚠️ Weakness: Focus on core concepts in your weaker subjects.", style: TextStyle(color: Colors.orangeAccent))),
                       if (studyVal >= 80 && attendanceVal >= 85)
                         const Padding(padding: EdgeInsets.only(top: 8), child: Text("⭐ Strength: Your discipline in studying and attendance is fantastic. Keep it up!", style: TextStyle(color: Colors.greenAccent))),
                       if (mathVal >= 80 || scienceVal >= 80 || englishVal >= 80)
