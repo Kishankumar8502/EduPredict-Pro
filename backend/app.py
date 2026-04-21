@@ -105,14 +105,55 @@ def predict():
         else:
             level = "Needs Improvement"
 
-        improvement = f"+{round(100 - score, 2)} marks possible"
+        # ✅ IMPROVEMENT LOGIC & SMART INSIGHT ENGINE
+        improvement_points = 0
+        insights = []
+
+        study_hours = float(data.get("study_hours", 5))
+        attendance = float(data.get("attendance", 85))
+        math_score = float(data.get("math_score", 50))
+        science_score = float(data.get("science_score", 50))
+        english_score = float(data.get("english_score", 50))
+        subject_avg = (math_score + science_score + english_score) / 3.0
+        study_method = str(data.get("study_method", "mixed")).lower()
+
+        if study_hours < 5:
+            improvement_points += 10
+            insights.append("Increase study consistency (target 5–7 hrs)")
+        
+        if attendance < 75:
+            improvement_points += 8
+            insights.append("Improve attendance for better performance")
+        
+        if subject_avg < 60:
+            improvement_points += 12
+            insights.append("Focus on core concepts in your weakest subjects")
+            
+        if math_score < 60 and "Focus on core concepts in your weakest subjects" not in insights:
+            insights.append("Focus on core concepts in Math")
+            
+        if study_method == "mixed" or study_method == "unstructured":
+            insights.append("Consider adopting a structured study method like 'notes' or 'textbook'")
+
+        # Cap max improvement at 25
+        improvement_points = min(improvement_points, 25)
+        
+        # If they are already perfect
+        if improvement_points == 0:
+            improvement_str = "+0 (Mastery Achieved)"
+            if not insights:
+                insights.append("Keep up the excellent work and maintain consistency.")
+        else:
+            lower = max(2, improvement_points - 3)
+            improvement_str = f"+{lower}–{improvement_points} marks improvement possible"
 
         return jsonify({
             "success": True,
             "prediction": round(score, 2),
             "predicted_overall_score": round(score, 2),
             "level": level,
-            "improvement": improvement
+            "improvement": improvement_str,
+            "insights": insights
         })
 
     except Exception as e:
